@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<!-- load the leaflet css and script-->
+		<link 
+			rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+			integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+			crossorigin=""/>
+		<script 
+			src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+			integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+			crossorigin="">
+		</script>
+		
+		<!-- Set the size of the map. Without this, the map won't show up -->
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+		<title>SheepMapGhent</title>
+		
+	</head>
+<body>
+		<!--
+		<p>
+      timestamp: <span id="timestamp"></span><br />
+    </p>
+		-->
+		
+		<div id="map"></div>
+
+		<script>
+      // Making map and tiles
+      const mymap = L.map('map').setView([51.0538286, 3.7250121, 0], 15);
+      const attribution =
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Tiles courtesy of <a href="https://geo6.be/">GEO-6</a>';
+      const tileUrl = 'http://tile.openstreetmap.be/osmbe/{z}/{x}/{y}.png'; // see https://github.com/jbelien/openstreetmap-carto-be/wiki for more info
+      const tiles = L.tileLayer(tileUrl, { attribution });
+      tiles.addTo(mymap);
+
+      // Making a marker with a custom icon
+      const SheepIcon = L.icon({
+        iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Sheep_%28166136%29_-_The_Noun_Project_2.svg', // source: https://commons.wikimedia.org/wiki/File:Sheep_(166136)_-_The_Noun_Project_2.svg (CC0)
+        iconSize: [50, 50],
+        iconAnchor: [25, 25]
+      });
+      let marker = L.marker([0, 0], { icon: SheepIcon }).addTo(mymap);
+
+			// Getting sheep location data
+			const api_url = 'https://data.stad.gent/api/records/1.0/search/?dataset=sheep-tracking-gent';
+      let firstTime = true;
+			async function getSheepLocation() {
+        const response = await fetch(api_url);
+        const data = await response.json();
+				const [lng, lat] = data.records[0].geometry.coordinates;
+				const timestamp = new Date(data.records[0].record_timestamp);
+				if(firstTime){
+					mymap.setView([lat, lng],15);
+					firstTime = false;
+				}
+				marker.setLatLng([lat, lng]);
+				document.getElementById('timestamp').textContent = timestamp;
+      }
+
+      getSheepLocation();
+			setInterval(getSheepLocation, 10000);
+    </script>
+
+</body>
+</html>
